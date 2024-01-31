@@ -6,37 +6,64 @@
 /*   By: rodralva <rodralva@student.42madrid>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/27 19:16:21 by rodralva          #+#    #+#             */
-/*   Updated: 2024/01/28 14:35:05 by rodralva         ###   ########.fr       */
+/*   Updated: 2024/01/31 20:49:30 by rodralva         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-void	*ft_memset(void *buf, int c, size_t len)
+char	*ft_free(char *buff, char *extra)
 {
-	size_t			i;
-	unsigned char	*t;
+	free (buff);
+	free (extra);
+	extra = NULL;
+	return (NULL);
+}
+
+void	ft_strlcpycat(char *dst, char *src, size_t destsize, int f)
+{
+	size_t	i;
+	size_t	j;
 
 	i = 0;
-	t = (unsigned char *) buf;
-	while (i < len)
+	if (f == 0)
 	{
-		t[i] = c;
-		i++;
+		while (src[i] && i + 1 < destsize)
+		{
+			dst[i] = src[i];
+			i++;
+		}
 	}
-	return (t);
+	else
+	{
+		j = 0;
+		while (dst[i])
+			i++;
+		while (src[j] && i < destsize)
+		{
+			dst[i] = src[j];
+			i++;
+			j++;
+		}
+	}
 }
 
 void	*ft_calloc(size_t count, size_t size)
 {
 	char	*array;
+	size_t	i;
 
+	i = 0;
 	if (size != 0 && count > SIZE_MAX / size)
 		return (NULL);
 	array = (char *) malloc(count * size);
 	if (array == NULL)
 		return (NULL);
-	ft_memset(array, 0, (count * size));
+	while (i < count * size)
+	{
+		array[i] = '\0';
+		i++;
+	}
 	return (array);
 }
 
@@ -58,4 +85,29 @@ char	*ft_strchr(const char *s, int c)
 	if (!(char) c)
 		return (&t[i]);
 	return (0);
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	int		i;
+	int		j;
+	char	*line;
+
+	i = 0;
+	j = 0;
+	if (s2)
+	{
+		while (s1[i])
+			i++;
+		while (s2[j])
+			j++;
+		line = ft_calloc(i + j + 1, 1);
+		if (!line)
+			return (NULL);
+		ft_strlcpycat(line, s1, i + j + 1, 0);
+		ft_strlcpycat(line, s2, i + j + 1, 1);
+		free (s1);
+		return (line);
+	}
+	return (s1);
 }
