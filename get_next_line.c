@@ -12,10 +12,95 @@
 
 #include "get_next_line.h"
 
-char	*ft_static(char	*stc, char *buff)
+size_t	ft_strlen(char *s)
 {
-	int i;
-	int j;
+	int	i;
+	
+	i = 0;
+	while(s[i])
+		i++;
+	return (i);
+}
+
+size_t ft_strlcpy(char *dst, char *src, size_t destsize)
+{
+	size_t	i;
+
+	i = 0;
+	while (src[i] && i + 1 < destsize)
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	src[i] = '\0';
+	return (ft_strlen(dst) + ft_strlen(src));
+}
+
+size_t ft_strlcat(char *dst, char *src, size_t destsize)
+{
+	size_t	i;
+	size_t	j;
+	
+	i = 0;
+	j = 0;
+	while (dst[i])
+		i++;
+	while (src[j] && i < destsize)
+	{
+		dst[i] = src[j];
+		i++;
+		j++;
+	}
+	dst[i] = '\0';
+	return (ft_strlen(dst) + ft_strlen(src));
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	int		n;
+	char	*line;
+
+	if (!s1)
+		s1 = ft_calloc (1, 1);
+	n = ft_strlen(s1) + ft_strlen(s2);
+	line = ft_calloc(n + 1, 1);
+	ft_strlcpy(line, s1, n + 1);
+	ft_strlcat(line, s2, n + 1);
+	free (s1);
+	return (line);
+}
+
+char	*ft_read(int fd, char *stc)
+{
+	char	*buff;
+	char	*line;
+	int	bytes;
+
+	bytes = 1;
+	line = NULL;
+	if (!stc)
+		stc = ft_calloc(1, 1);
+	line = ft_strjoin(line, stc);
+	buff = ft_calloc(BUFFER_SIZE + 1, 1);
+	if (!buff)
+		return (NULL);
+	while (bytes > 0 && ft_strchr(line, '\n') == 0)
+	{
+		bytes = read(fd, buff, BUFFER_SIZE);
+		if (bytes == -1)
+			return (NULL);
+		buff[bytes] = '\0';
+		line = ft_strjoin(line, buff);
+	}
+	free (buff);
+	return (line);
+}
+
+char	*ft_extra(char *buff)
+{
+	char *ret;
+	int	i;
+	int	j;
 
 	i = 0;
 	j = 0;
@@ -23,123 +108,52 @@ char	*ft_static(char	*stc, char *buff)
 		i++;
 	if (buff[i])
 		i++;
-	while (buff[i + j])
-		j++;
-	stc = ft_calloc(i + j + 1, 1);
-	if (!stc)
-		return (NULL);
-	j = 0;
-	while(buff[i + j])
+	ret = ft_calloc(ft_strlen(&buff[i]) + 1, 1);
+	while (buff[i])
 	{
-		stc[j] = buff[i + j];
+		ret[j] = buff[i];
+		i++;
 		j++;
 	}
-	return (stc);
+	return(ret);
 }
 
-char	*ft_join(char *s1, char *s2)
+char	*ft_line(char *buff)
 {
-	int 	i;
-	int 	j;
-	int		n;
-	char	*line;
+	char	*ret;
+	int	i;
+	int	l;
 
 	i = 0;
-	j = 0;
-
-	if (!*s1)
-		s1 = ft_calloc (1, 1);
-	if (!*s2)
-		return (NULL);
-	while (s1[i])
+	l = 0;
+	while (buff[i] && buff[i] != '\n')
 		i++;
-	while (s2[j] && s2[j] != '\n')
-		j++;
-	if (s2[j] == '\n')
-		j++;
-//	printf("buffff %s\n", s2);
-//	printf("lineee %s\n", s1);
-//	printf("iiii %d jjjj %d\n", i, j);
-	line = ft_calloc(i + j + 1, 1);
-	if (!line)
-		return (NULL);
-	i = 0;
-	while (s1[i])
-	{
-		line[i] = s1[i];
+	if (buff[i])
 		i++;
-	}
-	n = 0;
-	while (s2[n] && n < j)
+	ret = ft_calloc(i + 1, 1);
+	while (l < i)
 	{
-		line[i + n] = s2[n];
-		n++;
+		ret[l] = buff[l];
+		l++;
 	}
-	free (s1);
-	return (line);
+	return (ret);
 }
-
-char	*ft_read(char *buff, char *stc, int fd)
-{
-	char	*line;
-	int		bytes;
-
-	bytes = 1;
-	line = ft_calloc(1, 1);
-	if (!line)
-		return (NULL);
-	if (stc && *stc)
-	{
-		line = ft_join(line, stc);
-		if (!line)
-			return (NULL);
-		if (ft_strchr(line, '\n') != 0)
-			return (line);// falta aqui cambiar a estatica cando ten recollida mais de linea e mmedia do texto
-	}
-	while (bytes > 0 && ft_strchr(line, '\n') == 0)
-	{
-		bytes = read(fd, buff, BUFFER_SIZE);
-		if (bytes < 0)
-		{
-			free (buff);
-			return (NULL);
-		}
-
-		line = ft_join(line, buff);
-	}
-	stc = ft_static(stc, buff);
-//	printf("stccccc %s\n", stc);
-	return (line);
-}
-
 
 char	*get_next_line(int fd)
 {
-	static char	*stc;
+	static char	*buff = NULL;
 	char		*line;
-	char		*buff;
-
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
 		return (NULL);
-	buff = ft_calloc(BUFFER_SIZE + 1, 1);
+	buff = ft_read(fd, buff);
 	if (!buff)
 		return (NULL);
-	line = ft_read(buff, stc, fd);
-	if (!line)
-		return (NULL);
-	if (*buff)
-		stc = ft_static(stc, buff);
-	else
-	{
-		while (*stc && *stc != '\n')
-			stc++;
-		if (*stc)
-			stc++;
-	}
-	free (buff);
+	line = ft_line(buff);
+	buff = ft_extra(buff);
 	return (line);
 }
-
+/*
 int main(void)
 {
 	int fd = open("chistes.txt", O_RDONLY);
@@ -157,4 +171,4 @@ int main(void)
 	close (fd);
 	system("leaks -q a.out");
 	return (0);
-}
+}*/
